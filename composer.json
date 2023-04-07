@@ -1,0 +1,40 @@
+{
+    "name": "pixelpie/craft-pin-payments",
+    "description": "Pin Payments gateway integration",
+    "type": "craft-plugin",
+    "require": {
+        "php": ">=8.0.2",
+        "craftcms/cms": "^4.4.5"
+    },
+    "require-dev": {
+        "craftcms/ecs": "dev-main",
+        "craftcms/phpstan": "dev-main"
+    },
+    "autoload": {
+        "psr-4": {
+            "pixelpie\\craftpinpayments\\": "src/"
+        }
+    },
+    "extra": {
+        "handle": "_pin-payments",
+        "name": "Pin Payments",
+        "developer": "Pixelpie",
+        "documentationUrl": ""
+    },
+    "scripts": {
+        "check-cs": "ecs check --ansi",
+        "fix-cs": "ecs check --ansi --fix",
+        "phpstan": "phpstan --memory-limit=1G"
+    },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "8.0.2"
+        },
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true,
+            "craftcms/plugin-installer": true
+        }
+    }
+}
+
