@@ -2,7 +2,14 @@
     "name": "pixelpie/craft-pin-payments",
     "description": "Pin Payments gateway integration",
     "type": "craft-plugin",
-    "version": "0.0.1",
+    "license": "MIT",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "Pixel Pie",
+            "homepage": "https://pixelpie.com.au"
+        }
+    ],
     "require": {
         "php": ">=8.0.2",
         "craftcms/cms": "^4.4.5",
@@ -21,7 +28,7 @@
         "handle": "pin-payments",
         "name": "Pin Payments",
         "developer": "Pixelpie",
-        "documentationUrl": ""
+        "documentationUrl": "https://github.com/ax2000/pinpayments"
     },
     "scripts": {
         "check-cs": "ecs check --ansi",
