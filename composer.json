@@ -2,9 +2,11 @@
     "name": "pixelpie/craft-pin-payments",
     "description": "Pin Payments gateway integration",
     "type": "craft-plugin",
+    "version": "0.0.1",
     "require": {
         "php": ">=8.0.2",
-        "craftcms/cms": "^4.4.5"
+        "craftcms/cms": "^4.4.5",
+        "omnipay/pin": "~3.0"
     },
     "require-dev": {
         "craftcms/ecs": "dev-main",
@@ -16,7 +18,7 @@
         }
     },
     "extra": {
-        "handle": "_pin-payments",
+        "handle": "pin-payments",
         "name": "Pin Payments",
         "developer": "Pixelpie",
         "documentationUrl": ""

@@ -2,58 +2,35 @@
 
 namespace pixelpie\craftpinpayments;
 
-use Craft;
-use craft\base\Model;
-use craft\base\Plugin as BasePlugin;
-use pixelpie\craftpinpayments\models\Settings;
+use pixelpie\craftpinpayments\gateways\Gateway;
+use craft\commerce\services\Gateways;
+use craft\events\RegisterComponentTypesEvent;
+use yii\base\Event;
 
 /**
- * Pin Payments plugin
+ * Plugin proved Pin Payments integration for Commerce.
  *
- * @method static Plugin getInstance()
- * @method Settings getSettings()
+ * @author Pixel Pie <support@pixelpie.com.au>
+ * @since  1.0
  */
-class Plugin extends BasePlugin
+class Plugin extends \craft\base\Plugin
 {
-    public string $schemaVersion = '1.0.0';
-    public bool $hasCpSettings = true;
+    // Public Methods
+    // =========================================================================
 
-    public static function config(): array
-    {
-        return [
-            'components' => [
-                // Define component configs here...
-            ],
-        ];
-    }
-
-    public function init()
+    /**
+     * @inheritdoc
+     */
+    public function init(): void
     {
         parent::init();
 
-        // Defer most setup tasks until Craft is fully initialized
-        Craft::$app->onInit(function() {
-            $this->attachEventHandlers();
-            // ...
-        });
-    }
-
-    protected function createSettingsModel(): ?Model
-    {
-        return Craft::createObject(Settings::class);
-    }
-
-    protected function settingsHtml(): ?string
-    {
-        return Craft::$app->view->renderTemplate('_pin-payments/_settings.twig', [
-            'plugin' => $this,
-            'settings' => $this->getSettings(),
-        ]);
-    }
-
-    private function attachEventHandlers(): void
-    {
-        // Register event handlers here ...
-        // (see https://craftcms.com/docs/4.x/extend/events.html to get started)
+        Event::on(
+            Gateways::class,
+            Gateways::EVENT_REGISTER_GATEWAY_TYPES,
+            function(RegisterComponentTypesEvent $event) {
+                $event->types[] = Gateway::class;
+            }
+        );
     }
 }

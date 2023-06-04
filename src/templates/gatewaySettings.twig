@@ -1,0 +1,34 @@
+{% from "_includes/forms" import textField, booleanMenuField, autosuggestField %}
+
+
+{{ autosuggestField({
+  label: "Publishable API Key"|t('pinpayments'),
+  instructions: "Your publishable Pin Payments API key."|t('pinpayments'),
+  id: 'publishableKey',
+  class: 'ltr',
+  name: 'publishableKey',
+  suggestEnvVars: true,
+  value: gateway.settings.publishableKey,
+  errors: gateway.getErrors('publishableKey')
+}) }}
+
+{{ autosuggestField({
+  label: "Secret API Key"|t('pinpayments'),
+  instructions: "Your Pin Payments API key."|t('pinpayments'),
+  id: 'apiKey',
+  class: 'ltr',
+  name: 'apiKey',
+  suggestEnvVars: true,
+  value: gateway.settings.apiKey,
+  errors: gateway.getErrors('apiKey')
+}) }}
+
+ {{ booleanMenuField({
+   label: "Test mode?"|t('commerce'),
+   instructions: "When enabled payments will be in test environment only."|t('pinpayments'),
+   id: 'testMode',
+   name: 'testMode',
+   value: gateway.settings.testMode,
+   includeEnvVars: true,
+   errors: gateway.getErrors('testMode'),
+ }) }}
