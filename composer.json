@@ -14,7 +14,7 @@
         "php": ">=8.0.2",
         "craftcms/cms": "^4.4.5",
         "craftcms/commerce-omnipay": "^4.0.0-RC1",
-        "omnipay/pin": "dev-master"
+        "omnipay/pin": "~3.0"
     },
     "require-dev": {
         "craftcms/ecs": "dev-main",
