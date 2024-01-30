@@ -29,7 +29,8 @@
         "handle": "pin-payments",
         "name": "Pin Payments",
         "developer": "Pixelpie",
-        "documentationUrl": "https://github.com/ax2000/pinpayments"
+        "documentationUrl": "https://github.com/ax2000/pinpayments",
+        "bootstrap": "pixelpie\\craftpinpayments\\Plugin"
     },
     "scripts": {
         "check-cs": "ecs check --ansi",
