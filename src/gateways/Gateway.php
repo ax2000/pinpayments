@@ -2,10 +2,12 @@
 
 namespace pixelpie\craftpinpayments\gateways;
 
+use craft\commerce\models\Transaction;
 use pixelpie\craftpinpayments\models\PinPaymentsPaymentForm;
 
 use Craft;
 use craft\commerce\errors\PaymentException;
+use craft\commerce\base\RequestResponseInterface;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\omnipay\base\CreditCardGateway;
 use craft\helpers\App;
@@ -16,6 +18,10 @@ use Omnipay\Common\Message\ResponseInterface;
 use Omnipay\Pin\Gateway as OmnipayGateway;
 use Omnipay\Pin\Message\Response;
 use Throwable;
+use yii\base\NotSupportedException;
+
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 /**
  * Gateway represents Pin Payments gateway
@@ -171,6 +177,26 @@ class Gateway extends CreditCardGateway
             $request['encryptedCardCvv'] = $paymentForm->encryptedCardCvv ?? null;
 
             $request['cardReference'] = $paymentForm->cardReference ?? null;
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function purchase(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
+    {
+        try{
+            if (!$this->supportsPurchase()) {
+                throw new NotSupportedException(Craft::t('commerce', 'Purchasing is not supported by this gateway'));
+            }
+
+            $request = $this->createRequest($transaction, $form);
+            $purchaseRequest = $this->preparePurchaseRequest($request);
+
+            return $this->performRequest($purchaseRequest, $transaction);
+        } catch (\Exception $e) {
+            Craft::$app->getSession()->setFlash('error', 'An error occurred: ' . $e->getMessage());
+            throw new PaymentException('An error occurred: ' . $e->getMessage(), 0, $e);
         }
     }
 

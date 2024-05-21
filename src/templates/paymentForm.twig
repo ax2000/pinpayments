@@ -2,64 +2,22 @@
   {% import "_includes/forms" as forms %}
   <fieldset class="card-holder">
     <div class="row">
-      <div class="col-md-6">
-        <label for="number" class="d-none">
-          Card Number
+      <div class="col-12">
+        <!-- Cardholder Name -->
+        <label for="name" class="form-label">
+          Credit Card Full Name
         </label>
         {{ forms.text({
-          name: 'number',
-          id: 'number',
-          maxlength: 19,
-          placeholder: "•••• •••• •••• ••••"|t('commerce'),
-          autocomplete: false,
-          class: 'form-control mb-3 card-number'~(paymentForm.getErrors('number') ? ' error'),
-          required: 'required'
-        }) }}
-      </div>
-      <div class="col-md-6">
-        <div class="input-group mb-1">
-          <label for="expiry" class="d-none">
-            Expiration
-          </label>
-          {{ forms.text({
-            class: 'form-control mb-3 card-expiry'~(paymentForm.getErrors('month') or paymentForm.getErrors('year') ? ' error'),
-            type: 'text',
-            name: 'expiry',
-            id: 'expiry',
-            placeholder: "MM"|t('commerce')~'/'~"YYYY"|t('commerce'),
-            required: true
-          }) }}
-          <label for="cvv" class="d-none">
-            CVV
-          </label>
-          {{ forms.text({
-            type: 'tel',
-            name: 'cvv',
-            id: 'cvc',
-            placeholder: "CVV"|t('commerce'),
-            class: 'form-control mb-3 card-cvv'~(paymentForm.getErrors('cvv') ? ' error'),
-            required: true
-          }) }}
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <!-- Card Holder Name -->
-      <div class="input-group mb-3">
-
-        <label for="name" class="d-none">
-          Card First Name
-        </label>
-        {{ forms.text({
-          name: 'firstName',
+          name: 'fullName',
           id:'name',
           maxlength: 70,
-          placeholder: "First Name"|t('commerce'),
+          placeholder: "e.g. Jane Smith"|t('commerce'),
           autocomplete: false,
-          class: 'form-control mb-3 card-holder-first-name'~(paymentForm.getErrors('firstName') ? ' error'),
+          class: 'form-control mb-3 card-holder-first-name'~(paymentForm.getErrors('fullName') ? ' error'),
           required: true,
         }) }}
-
+      </div>
+{#
         <label for="lastName" class="d-none">
           Card Last Name
         </label>
@@ -72,19 +30,57 @@
           class: 'form-control mb-3 card-holder-last-name'~(paymentForm.getErrors('lastName') ? ' error'),
           required: true,
         }) }}
+#}
+    </div>
+    <div class="row">
+      <div class="col-md-6 card-number-wrap">
+        <label for="number" class="form-label">
+          Credit Card Number
+        </label>
+        {{ forms.text({
+          name: 'number',
+          id: 'number',
+          maxlength: 19,
+          placeholder: "•••• •••• •••• ••••"|t('commerce'),
+          autocomplete: false,
+          class: 'form-control mb-3 card-number'~(paymentForm.getErrors('number') ? ' error'),
+          required: true
+        }) }}
+      </div>
+      <div class="col-md-6">
+        <div class="row">
+          <div class="col-md-6">
+            <label for="expiry" class="form-label">
+              Expiry <span class="fw-normal small">(MM/YY)</span>
+            </label>
+            {{ forms.text({
+              class: 'form-control mb-3 card-expiry'~(paymentForm.getErrors('month') or paymentForm.getErrors('year') ? ' error'),
+              type: 'tel',
+              name: 'expiry',
+              id: 'expiry',
+              placeholder: "e.g. 06/" ~ (now|date_modify("+3 year"))|date("y"),
+              maxlength: '7',
+              required: true,
+            }) }}
+          </div>
+          <div class="col-md-6 cvv-wrap">
+            <label for="cvv" class="form-label">
+              CVV
+            </label>
+            {{ forms.text({
+              type: 'tel',
+              name: 'cvv',
+              id: 'cvc',
+              placeholder: "e.g. 135"|t('commerce'),
+              class: 'form-control mb-3 card-cvv'~(paymentForm.getErrors('cvv') ? ' error'),
+              required: true,
+            }) }}
+          </div>
+        </div>
       </div>
     </div>
-
     {% set errors = [] %}
-    {% for attributeKey in ['firstName', 'lastName'] %}
-      {% set errors = errors|merge(paymentForm.getErrors(attributeKey)) %}
-    {% endfor %}
-
-    {{ forms.errorList(errors) }}
-
-
-    {% set errors = [] %}
-    {% for attributeKey in ['number', 'month', 'year', 'cvv'] %}
+    {% for attributeKey in ['fullName', 'number', 'month', 'year', 'cvv'] %}
       {% set errors = errors|merge(paymentForm.getErrors(attributeKey)) %}
     {% endfor %}
 

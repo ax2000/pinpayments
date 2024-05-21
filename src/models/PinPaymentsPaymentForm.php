@@ -29,6 +29,11 @@ class PinPaymentsPaymentForm extends CreditCardPaymentForm
     public ?string $cardReference = null;
 
     /**
+     * @var string|null Full name on the card
+     */
+    public ?string $fullName = null;
+
+    /**
      * @inheritdoc
      */
     public function populateFromPaymentSource(PaymentSource $paymentSource): void
@@ -42,10 +47,11 @@ class PinPaymentsPaymentForm extends CreditCardPaymentForm
     public function rules(): array
     {
         if (empty($this->cardReference)) {
+            $currentYear = intval(date('y'));
             return [
-                [['firstName', 'lastName', 'month', 'year', 'number', 'cvv'], 'required'],
+                [['fullName', 'month', 'year', 'number', 'cvv'], 'required'],
                 [['month'], 'integer', 'integerOnly' => true, 'min' => 1, 'max' => 12],
-                [['year'], 'integer', 'integerOnly' => true, 'min' => date('Y'), 'max' => date('Y') + 12],
+                [['year'], 'integer', 'integerOnly' => true, 'min' => $currentYear, 'max' => $currentYear + 12],
             ];
         }
 
