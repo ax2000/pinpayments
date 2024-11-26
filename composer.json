@@ -1,9 +1,9 @@
 {
     "name": "pixelpie/craft-pin-payments",
-    "description": "Pin Payments gateway integration",
+    "description": "Pin Payments gateway integration for CraftCMS 4.x",
     "type": "craft-plugin",
     "license": "MIT",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "authors": [
         {
             "name": "Pixel Pie",
@@ -20,6 +20,12 @@
         "craftcms/ecs": "dev-main",
         "craftcms/phpstan": "dev-main"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/ax2000/omnipay-pin"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "pixelpie\\craftpinpayments\\": "src/"

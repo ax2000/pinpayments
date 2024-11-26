@@ -2,26 +2,44 @@
 
 namespace pixelpie\craftpinpayments\gateways;
 
+use craft\commerce\base\RequestResponseInterface;
+use craft\commerce\errors\CurrencyException;
+use craft\commerce\errors\OrderStatusException;
+use craft\commerce\errors\TransactionException;
 use craft\commerce\models\Transaction;
+use craft\commerce\omnipay\base\OffsiteGateway;
+use craft\commerce\Plugin as Commerce;
+use craft\commerce\records\Transaction as TransactionRecord;
+use craft\errors\ElementNotFoundException;
+use craft\web\Response as WebResponse;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use Omnipay\Common\Message\AbstractResponse;
+use Omnipay\Common\Message\RequestInterface;
 use pixelpie\craftpinpayments\models\PinPaymentsPaymentForm;
+use pixelpie\craftpinpayments\gateways\RequestResponse;
 
 use Craft;
 use craft\commerce\errors\PaymentException;
-use craft\commerce\base\RequestResponseInterface;
+//use craft\commerce\base\RequestResponseInterface;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\omnipay\base\CreditCardGateway;
 use craft\helpers\App;
-use craft\helpers\Html;
 use craft\web\View;
+
 use Omnipay\Common\AbstractGateway;
 use Omnipay\Common\Message\ResponseInterface;
+use Omnipay\Common\Message\AbstractRequest;
+
 use Omnipay\Pin\Gateway as OmnipayGateway;
 use Omnipay\Pin\Message\Response;
-use Throwable;
-use yii\base\NotSupportedException;
 
-use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
+use Throwable;
+use yii\base\Exception;
+use yii\base\InvalidConfigException;
+use yii\base\InvalidRouteException;
+use yii\base\NotSupportedException;
 
 /**
  * Gateway represents Pin Payments gateway
@@ -51,6 +69,102 @@ class Gateway extends CreditCardGateway
      */
     private bool|string $_testMode = false;
 
+    /**
+     * @inheritdoc
+     */
+    public function supportsCompletePurchase(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function supportsWebhooks(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return WebResponse
+     * @throws Throwable
+     * @throws GuzzleException
+     * @throws CurrencyException
+     * @throws OrderStatusException
+     * @throws TransactionException
+     * @throws ElementNotFoundException
+     * @throws Exception
+     * @throws InvalidConfigException
+     * @throws InvalidRouteException
+     */
+    public function processWebHook(): WebResponse
+    {
+        $response = Craft::$app->getResponse();
+        $sessionToken = Craft::$app->getRequest()->getQueryParam('session_token');
+        $transactionId = Craft::$app->getRequest()->getQueryParam('transaction_id');
+        $redirectUrl = "";
+
+        if ($sessionToken && $transactionId) {
+            $client = new Client();
+            $apiKey = App::env('PINPAYMENTS_SECRET_KEY');
+
+            try {
+                $pinResponse = $client->request('GET', 'https://test-api.pinpayments.com/1/charges/verify', [
+                    'query' => ['session_token' => $sessionToken],
+                    'auth' => [$apiKey, ''],
+                    'headers' => [
+                        'Accept' => 'application/json',
+                    ],
+                ]);
+
+                $responseData = json_decode($pinResponse->getBody(), true);
+
+                if (isset($responseData['response']['success']) && $responseData['response']['success']) {
+                    // Payment was successful
+                    Craft::info('Payment was successful for session token: ' . $sessionToken, 'pin-payments');
+
+                    // Retrieve the transaction using the session token
+                    $transaction = Commerce::getInstance()->getTransactions()->getTransactionByHash($transactionId);
+
+                    if ($transaction) {
+                        // Create a new child transaction
+                        $childTransaction = Commerce::getInstance()->getTransactions()->createTransaction(null, $transaction);
+                        $childTransaction->orderId = $transaction->orderId;
+                        $childTransaction->parentId = $transaction->id;
+                        $childTransaction->gatewayId = $transaction->gatewayId;
+                        $childTransaction->amount = $transaction->amount;
+                        $childTransaction->currency = $transaction->currency;
+                        $childTransaction->paymentAmount = $transaction->paymentAmount;
+                        $childTransaction->paymentCurrency = $transaction->paymentCurrency;
+                        $childTransaction->type = TransactionRecord::TYPE_PURCHASE;
+                        $childTransaction->status = TransactionRecord::STATUS_SUCCESS;
+                        $childTransaction->message = 'Success';
+                        $childTransaction->response = $responseData;
+
+                        Commerce::getInstance()->getTransactions()->saveTransaction($childTransaction);
+                        $order = $transaction->getOrder();
+                        // Redirect to the order's return URL, which is the order's invoice URL
+                        $redirectUrl = $order->returnUrl;
+                    } else {
+                        Craft::warning('Transaction not found for session token: ' . $sessionToken, 'pin-payments');
+                    }
+                } else {
+                    // Payment failed
+                    Craft::warning('Payment failed for session token: ' . $sessionToken, 'pin-payments');
+                }
+            } catch (RequestException $e) {
+                Craft::error('Error verifying payment: ' . $e->getMessage(), 'pin-payments');
+            }
+        } else {
+            Craft::warning('No session token provided in the webhook request.', 'pin-payments');
+        }
+
+        if ($redirectUrl) {
+            return $response->redirect($redirectUrl);
+        }
+
+        return $response;
+    }
 
     /**
      * @inheritdoc
@@ -185,7 +299,7 @@ class Gateway extends CreditCardGateway
      */
     public function purchase(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
     {
-        try{
+        try {
             if (!$this->supportsPurchase()) {
                 throw new NotSupportedException(Craft::t('commerce', 'Purchasing is not supported by this gateway'));
             }
@@ -276,4 +390,11 @@ class Gateway extends CreditCardGateway
 
         return $html;
     }
+
+    protected function prepareResponse(ResponseInterface $response, Transaction $transaction): RequestResponseInterface
+    {
+        /** @var AbstractResponse $response */
+        return new RequestResponse($response, $transaction);
+    }
+
 }
