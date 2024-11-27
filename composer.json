@@ -3,7 +3,7 @@
     "description": "Pin Payments gateway integration for CraftCMS 4.x",
     "type": "craft-plugin",
     "license": "MIT",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "authors": [
         {
             "name": "Pixel Pie",
@@ -14,7 +14,7 @@
         "php": ">=8.0.2",
         "craftcms/cms": "^4.4.5",
         "craftcms/commerce-omnipay": "^4.0.0-RC1",
-        "omnipay/pin": "~3.0"
+        "omnipay/pin": "dev-master"
     },
     "require-dev": {
         "craftcms/ecs": "dev-main",
