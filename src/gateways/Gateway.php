@@ -106,10 +106,15 @@ class Gateway extends CreditCardGateway
 
         if ($sessionToken && $transactionId) {
             $client = new Client();
-            $apiKey = App::env('PINPAYMENTS_SECRET_KEY');
+            $apiKey = $this->_apiKey;
+            // Check if the API key is an environment variable
+            if (str_starts_with($apiKey, '$')) {
+                $apiKey = App::env(trim($apiKey, '$'));
+            }
 
+            $apiUrl = $this->getTestMode() ? 'https://test-api.pinpayments.com/1/charges/verify' : 'https://api.pinpayments.com/1/charges/verify';
             try {
-                $pinResponse = $client->request('GET', 'https://test-api.pinpayments.com/1/charges/verify', [
+                $pinResponse = $client->request('GET', $apiUrl, [
                     'query' => ['session_token' => $sessionToken],
                     'auth' => [$apiKey, ''],
                     'headers' => [
