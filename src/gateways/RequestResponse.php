@@ -27,5 +27,14 @@ class RequestResponse extends BaseRequestResponse
         $responseData = $this->response->getData();
         return $responseData['response']['status_message'] === 'Pending';
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function getRedirectUrl(): string
+    {
+        $responseData = $this->response->getData();
+        return $responseData['response']['redirect_url'];
+    }
 }
 
