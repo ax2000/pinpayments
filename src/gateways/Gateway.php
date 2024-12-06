@@ -208,6 +208,9 @@ class Gateway extends CreditCardGateway
             Craft::$app->getSession()->setFlash('error', 'No session token provided in the webhook request. ');
             return Craft::$app->getResponse()->redirect('/checkout');
         }
+        if ($redirectUrl) {
+            return $response->redirect($redirectUrl);
+        }
         return $response;
     }
 
