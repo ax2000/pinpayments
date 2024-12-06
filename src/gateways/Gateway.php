@@ -156,18 +156,58 @@ class Gateway extends CreditCardGateway
                 } else {
                     // Payment failed
                     Craft::warning('Payment failed for session token: ' . $sessionToken, 'pin-payments');
+                    // Retrieve the transaction using the session token
+                    $transaction = Commerce::getInstance()->getTransactions()->getTransactionByHash($transactionId);
+
+                    if ($transaction) {
+                        // Create a new child transaction
+                        $childTransaction = Commerce::getInstance()->getTransactions()->createTransaction(null, $transaction);
+                        $childTransaction->orderId = $transaction->orderId;
+                        $childTransaction->parentId = $transaction->id;
+                        $childTransaction->gatewayId = $transaction->gatewayId;
+                        $childTransaction->amount = $transaction->amount;
+                        $childTransaction->currency = $transaction->currency;
+                        $childTransaction->paymentAmount = $transaction->paymentAmount;
+                        $childTransaction->paymentCurrency = $transaction->paymentCurrency;
+                        $childTransaction->type = TransactionRecord::TYPE_PURCHASE;
+                        $childTransaction->status = $responseData['response']['success'] ? TransactionRecord::STATUS_SUCCESS : TransactionRecord::STATUS_FAILED;
+                        $childTransaction->message = $responseData['response']['status_message'];
+                        $childTransaction->response = $responseData;
+                        Commerce::getInstance()->getTransactions()->saveTransaction($childTransaction);
+
+                        // Convert Order to Cart
+                        $order = $transaction->getOrder();
+                        $redirectUrl = $order->cancelUrl;
+                        $order->isCompleted = false;
+                        $order->orderStatusId = null;
+                        $order->dateOrdered = null;
+                        $order->reference = null;
+                        $order->recalculationMode = $order::RECALCULATION_MODE_ALL;
+                        $order->orderCompletedEmail = null;
+                        $order->returnUrl = null;
+                        $order->cancelUrl = null;
+                        Craft::$app->getElements()->saveElement($order);
+                        // Redirect to the order's return URL, which is the order's invoice URL
+                        // Create a flash error message and redirect to the order's cancel URL
+                        //Craft::$app->getSession()->setError('Payment failed: ' . $responseData['response']['status_message']);
+                        Craft::$app->getSession()->setFlash('error', "Payment failed: " . $responseData['response']['status_message']);
+                        return Craft::$app->getResponse()->redirect($redirectUrl);
+                    } else {
+                        Craft::warning('Transaction not found for session token: ' . $sessionToken, 'pin-payments');
+                        Craft::$app->getSession()->setFlash('error', 'Transaction not found for session token: ' . $sessionToken);
+                        return Craft::$app->getResponse()->redirect('/checkout');
+                    }
                 }
             } catch (RequestException $e) {
                 Craft::error('Error verifying payment: ' . $e->getMessage(), 'pin-payments');
+                Craft::$app->getSession()->setFlash('error', 'Error verifying payment: ' . $e->getMessage());
+                return Craft::$app->getResponse()->redirect('/checkout');
             }
         } else {
             Craft::warning('No session token provided in the webhook request.', 'pin-payments');
+            Craft::$app->getSession()->setFlash('error', 'No session token provided in the webhook request. ');
+            return Craft::$app->getResponse()->redirect('/checkout');
         }
-
-        if ($redirectUrl) {
-            return $response->redirect($redirectUrl);
-        }
-
         return $response;
     }
 

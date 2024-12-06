@@ -51,7 +51,7 @@
         <div class="row">
           <div class="col-6">
             <label for="expiry" class="form-label">
-              Expiry <span class="fw-normal small">(MM/YY)</span>
+              Expiry <span class="fw-normal small" style="font-size: 0.65rem;">(MM/YY)</span>
             </label>
             {{ forms.text({
               class: 'form-control mb-3 card-expiry'~(paymentForm.getErrors('month') or paymentForm.getErrors('year') ? ' error'),
